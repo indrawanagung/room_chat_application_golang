@@ -2,6 +2,7 @@ package src
 
 import (
 	"fmt"
+	"github.com/gofiber/fiber/v2/log"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -43,18 +44,30 @@ func (h *WebsocketHandlerImpl) JoinRoom(c *websocket.Conn) {
 		Username: username,
 	}
 
-	// _, ok := h.hub.Rooms[roomID]
-	// if !ok {
-	// 	c.WriteJSON("room id is not found")
-	// 	c.Conn.Close()
-	// 	return
-	// }
-	// _, ok = h.hub.Rooms[roomID].Clients[username]
-	// if ok {
-	// 	c.WriteJSON("username has already exist")
-	// 	c.Conn.Close()
-	// 	return
-	// }
+	_, ok := h.hub.Rooms[roomID]
+	if !ok {
+		err := c.WriteJSON("room id is not found")
+		if err != nil {
+			log.Error(err)
+		}
+		err = c.Conn.Close()
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
+	_, ok = h.hub.Rooms[roomID].Clients[username]
+	if ok {
+		err := c.WriteJSON("username has already exist")
+		if err != nil {
+			log.Error(err)
+		}
+		err = c.Conn.Close()
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
 
 	m := &Message{
 		Content:  fmt.Sprintf("%s has joined the room", username),
